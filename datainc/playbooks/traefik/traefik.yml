@@ -1,0 +1,34 @@
+- hosts: master
+
+  tasks:
+    - name: Copy traefik dir
+      synchronize:
+        src: .
+        dest: .
+
+    - name: Create hashed password
+      shell: 'openssl passwd -apr1 {{ traefik_password }}'
+      register: hashed_password_raw
+
+    - name: save hashed password
+      set_fact:
+        hashed_password: '{{ hashed_password_raw.stdout_lines[0] }}'
+
+    - name: Add traefik label for main node
+      shell: 'docker node update --label-add traefik-public.traefik-public-certificates=true {{ main_node }}'
+
+    - name: Create traefik network
+      shell: 'docker network create --driver=overlay traefik-public > create_traefik_network.txt'
+      args:
+        chdir: $HOME
+        creates: create_traefik_network.txt
+
+    - name: Deploy traefik
+      shell: 'docker stack deploy -c traefik/docker-compose.yml traefik'
+      environment:
+        - USERNAME: '{{ traefik_username }}'
+        - HASHED_PASSWORD: '{{ hashed_password }}'
+        - EMAIL: '{{ traefik_email }}'
+        - DOMAIN: '{{ traefik_domain }}'
+      args:
+        chdir: $HOME

@@ -1,0 +1,6 @@
+# - import_playbook: playbooks/docker-dependencies.yml
+# - import_playbook: playbooks/swarm-master.yml
+# - import_playbook: playbooks/swarm-worker.yml
+# - import_playbook: playbooks/traefik/traefik.yml
+# - import_playbook: playbooks/portainer/portainer.yml
+- import_playbook: playbooks/garage/garage.yml

@@ -1,0 +1,10 @@
+[project]
+name = "datainc-iac"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ansible>=13.4.0",
+    "ansible-core>=2.20.3",
+]
