@@ -1,0 +1,34 @@
+# Example Ansible extra vars for this repo.
+# Copy to `datainc/extra-vars.yml` and fill in values.
+
+# Swarm node name used for pinning stateful services via node labels.
+main_node: datainc-1
+
+# Traefik (public entrypoint + Let's Encrypt)
+traefik_username: dataincadmin
+traefik_password: "CHANGE_ME"          # plaintext; playbook hashes it
+traefik_email: you@example.com
+traefik_domain: traefik.example.com
+
+# Portainer
+portainer_domain: portainer.example.com
+
+# Garage (S3-compatible object storage)
+garage_domain: s3.example.com
+garage_rpc_secret: "CHANGE_ME"        # generate: openssl rand -hex 32
+
+# Credentials Spark uses to access Garage via S3A.
+# These must exist in Garage (access key + secret key).
+garage_key_id: "CHANGE_ME"
+garage_secret_key: "CHANGE_ME"
+
+# Nessie
+nessie_domain: nessie.example.com
+nessie_node: datainc-2                 # node hostname to label for Nessie placement
+
+# Spark
+spark_domain: spark.example.com         # Spark master UI (Traefik routed)
+spark_thrift_ui_domain: thrift.example.com
+
+# Notebook (JupyterLab)
+notebook_domain: notebook.example.com
