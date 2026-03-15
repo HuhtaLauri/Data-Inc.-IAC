@@ -1,0 +1,59 @@
+services:
+  notebook:
+    image: apache/spark:4.0.0
+    user: root
+    environment:
+      # Use a hostname that is valid per Spark URL parsing rules (no underscores)
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - PYSPARK_SUBMIT_ARGS=--master spark://spark-master:7077 pyspark-shell
+    volumes:
+      - notebook-data:/notebooks
+    networks:
+      - traefik-public
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        set -euo pipefail
+        python3 -m pip install --no-cache-dir jupyterlab==4.3.3
+        mkdir -p /notebooks
+        PY4J_ZIP="$(ls -1 /opt/spark/python/lib/py4j-*-src.zip | head -n 1)"
+        PYSPARK_ZIP="/opt/spark/python/lib/pyspark.zip"
+        export PYTHONPATH="/opt/spark/python:${PYSPARK_ZIP}:${PY4J_ZIP}:${PYTHONPATH:-}"
+        exec jupyter lab \
+          --ip=0.0.0.0 \
+          --port=8888 \
+          --no-browser \
+          --allow-root \
+          --ServerApp.root_dir=/notebooks \
+          --IdentityProvider.token='' \
+          --ServerApp.allow_remote_access=true \
+          --ServerApp.trust_xheaders=true
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.role == manager
+          - node.labels.notebook.notebook-data == true
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.notebook-http.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.notebook-http.entrypoints=http
+        - traefik.http.routers.notebook-http.middlewares=https-redirect@docker
+        - traefik.http.routers.notebook-https.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.notebook-https.entrypoints=https
+        - traefik.http.routers.notebook-https.tls=true
+        - traefik.http.routers.notebook-https.tls.certresolver=le
+        - traefik.http.routers.notebook-https.middlewares=admin-auth@docker
+        - traefik.http.services.notebook.loadbalancer.server.port=8888
+
+networks:
+  traefik-public:
+    external: true
+
+volumes:
+  notebook-data:

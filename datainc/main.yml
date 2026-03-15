@@ -3,4 +3,7 @@
 # - import_playbook: playbooks/swarm-worker.yml
 # - import_playbook: playbooks/traefik/traefik.yml
 # - import_playbook: playbooks/portainer/portainer.yml
-- import_playbook: playbooks/garage/garage.yml
+# - import_playbook: playbooks/garage/garage.yml
+# - import_playbook: playbooks/nessie/nessie.yml
+- import_playbook: playbooks/spark/spark.yml
+- import_playbook: playbooks/notebook/notebook.yml

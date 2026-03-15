@@ -1,0 +1,40 @@
+services:
+  nessie:
+    image: ghcr.io/projectnessie/nessie:latest
+    user: root
+    networks:
+      - traefik-public
+    volumes:
+      - nessie-data:/var/lib/nessie
+      # This file is copied to the node at $HOME/nessie/nessie.properties
+      - /root/nessie/nessie.properties:/deployments/config/application.properties:ro
+    environment:
+      - QUARKUS_HTTP_PORT=19120
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.labels.nessie.nessie-data == true
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.nessie-http.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.nessie-http.entrypoints=http
+        - traefik.http.routers.nessie-http.middlewares=https-redirect
+        - traefik.http.routers.nessie-https.rule=Host(`${DOMAIN?Variable not set}`)
+        - traefik.http.routers.nessie-https.entrypoints=https
+        - traefik.http.routers.nessie-https.tls=true
+        - traefik.http.routers.nessie-https.tls.certresolver=le
+        # Re-use the basic-auth middleware defined in the Traefik stack
+        - traefik.http.routers.nessie-https.middlewares=admin-auth@docker
+        - traefik.http.services.nessie.loadbalancer.server.port=19120
+
+networks:
+  traefik-public:
+    external: true
+
+volumes:
+  nessie-data:

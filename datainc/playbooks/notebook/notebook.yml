@@ -1,0 +1,17 @@
+- hosts: master
+
+  tasks:
+    - name: Copy notebook dir
+      synchronize:
+        src: "{{ playbook_dir }}/"
+        dest: notebook/
+
+    - name: Add notebook label for main node
+      shell: 'docker node update --label-add notebook.notebook-data=true {{ main_node }}'
+
+    - name: Deploy notebook
+      shell: 'docker stack deploy -c notebook/docker-compose.yml notebook'
+      environment:
+        - DOMAIN: '{{ notebook_domain }}'
+      args:
+        chdir: $HOME

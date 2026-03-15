@@ -1,0 +1,18 @@
+- hosts: master
+
+  tasks:
+    - name: Copy spark dir
+      synchronize:
+        src: "{{ playbook_dir }}/"
+        dest: spark/
+
+    - name: Add spark label for main node
+      shell: 'docker node update --label-add spark.spark-data=true {{ main_node }}'
+
+    - name: Deploy spark
+      shell: 'docker stack deploy -c spark/docker-compose.yml spark'
+      environment:
+        - DOMAIN: '{{ spark_domain }}'
+        - EXTERNAL_IP: '{{ spark_domain }}'
+      args:
+        chdir: $HOME

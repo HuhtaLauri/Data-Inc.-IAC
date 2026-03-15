@@ -1,0 +1,18 @@
+- hosts: master
+  tasks:
+    - name: Copy nessie dir
+      synchronize:
+        src: "{{ playbook_dir }}/"
+        dest: nessie/
+
+- hosts: master
+  tasks:
+    - name: Add nessie label for node
+      shell: "docker node update --label-add nessie.nessie-data=true {{ nessie_node | default('datainc-2') }}"
+
+    - name: Deploy nessie
+      shell: 'docker stack deploy -c nessie/docker-compose.yml nessie'
+      environment:
+        - DOMAIN: '{{ nessie_domain }}'
+      args:
+        chdir: $HOME
