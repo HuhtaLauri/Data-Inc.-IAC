@@ -1,13 +1,19 @@
 services:
   notebook:
-    image: apache/spark:4.0.0
+    image: apache/spark:3.5.1
     user: root
     environment:
       # Use a hostname that is valid per Spark URL parsing rules (no underscores)
       - SPARK_MASTER_URL=spark://spark-master:7077
       - PYSPARK_SUBMIT_ARGS=--master spark://spark-master:7077 pyspark-shell
+      - SPARK_CONF_DIR=/opt/spark/conf
+      - GARAGE_KEY_ID=${GARAGE_KEY_ID:-}
+      - GARAGE_SECRET_KEY=${GARAGE_SECRET_KEY:-}
+      - AWS_ACCESS_KEY_ID=${GARAGE_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${GARAGE_SECRET_KEY:-}
     volumes:
       - notebook-data:/notebooks
+      - /root/spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
     networks:
       - traefik-public
     command:
@@ -15,8 +21,15 @@ services:
       - -lc
       - |
         set -euo pipefail
-        python3 -m pip install --no-cache-dir jupyterlab==4.3.3
+        python3 -m pip install --no-cache-dir \
+          jupyterlab==4.3.3 \
+          jupyterlab-lsp \
+          python-lsp-server
         mkdir -p /notebooks
+        test -f /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.6.1.jar || curl -fsSLo /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.6.1.jar https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_2.12/1.6.1/iceberg-spark-runtime-3.5_2.12-1.6.1.jar
+        test -f /opt/spark/jars/nessie-spark-extensions-3.5_2.12-0.99.0.jar || curl -fsSLo /opt/spark/jars/nessie-spark-extensions-3.5_2.12-0.99.0.jar https://repo1.maven.org/maven2/org/projectnessie/nessie-integrations/nessie-spark-extensions-3.5_2.12/0.99.0/nessie-spark-extensions-3.5_2.12-0.99.0.jar
+        test -f /opt/spark/jars/hadoop-aws-3.3.4.jar || curl -fsSLo /opt/spark/jars/hadoop-aws-3.3.4.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar
+        test -f /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar || curl -fsSLo /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar
         PY4J_ZIP="$(ls -1 /opt/spark/python/lib/py4j-*-src.zip | head -n 1)"
         PYSPARK_ZIP="/opt/spark/python/lib/pyspark.zip"
         export PYTHONPATH="/opt/spark/python:${PYSPARK_ZIP}:${PY4J_ZIP}:${PYTHONPATH:-}"

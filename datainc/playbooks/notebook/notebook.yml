@@ -13,5 +13,7 @@
       shell: 'docker stack deploy -c notebook/docker-compose.yml notebook'
       environment:
         - DOMAIN: '{{ notebook_domain }}'
+        - GARAGE_KEY_ID: '{{ garage_key_id | default("") }}'
+        - GARAGE_SECRET_KEY: '{{ garage_secret_key | default("") }}'
       args:
         chdir: $HOME

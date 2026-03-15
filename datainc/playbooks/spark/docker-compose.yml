@@ -1,13 +1,28 @@
 services:
 
   master:
-    image: apache/spark:4.0.0
-    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master", "-h", "0.0.0.0"]
+    image: apache/spark:3.5.1
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        set -euo pipefail
+        test -f /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.6.1.jar || curl -fsSLo /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.6.1.jar https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_2.12/1.6.1/iceberg-spark-runtime-3.5_2.12-1.6.1.jar
+        test -f /opt/spark/jars/nessie-spark-extensions-3.5_2.12-0.99.0.jar || curl -fsSLo /opt/spark/jars/nessie-spark-extensions-3.5_2.12-0.99.0.jar https://repo1.maven.org/maven2/org/projectnessie/nessie-integrations/nessie-spark-extensions-3.5_2.12/0.99.0/nessie-spark-extensions-3.5_2.12-0.99.0.jar
+        test -f /opt/spark/jars/hadoop-aws-3.3.4.jar || curl -fsSLo /opt/spark/jars/hadoop-aws-3.3.4.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar
+        test -f /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar || curl -fsSLo /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar
+        exec /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master -h 0.0.0.0
     hostname: master
     environment:
       MASTER: spark://master:7077
-      SPARK_CONF_DIR: /conf
+      SPARK_CONF_DIR: /opt/spark/conf
+      GARAGE_KEY_ID: ${GARAGE_KEY_ID:-}
+      GARAGE_SECRET_KEY: ${GARAGE_SECRET_KEY:-}
+      AWS_ACCESS_KEY_ID: ${GARAGE_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${GARAGE_SECRET_KEY:-}
       SPARK_PUBLIC_DNS: ${EXTERNAL_IP}
+    volumes:
+      - /root/spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
     networks:
       traefik-public:
         aliases:
@@ -37,14 +52,29 @@ services:
         - traefik.http.routers.spark-https.middlewares=admin-auth@docker
 
   worker:
-    image: apache/spark:4.0.0
-    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://master:7077"]
+    image: apache/spark:3.5.1
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        set -euo pipefail
+        test -f /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.6.1.jar || curl -fsSLo /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.6.1.jar https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_2.12/1.6.1/iceberg-spark-runtime-3.5_2.12-1.6.1.jar
+        test -f /opt/spark/jars/nessie-spark-extensions-3.5_2.12-0.99.0.jar || curl -fsSLo /opt/spark/jars/nessie-spark-extensions-3.5_2.12-0.99.0.jar https://repo1.maven.org/maven2/org/projectnessie/nessie-integrations/nessie-spark-extensions-3.5_2.12/0.99.0/nessie-spark-extensions-3.5_2.12-0.99.0.jar
+        test -f /opt/spark/jars/hadoop-aws-3.3.4.jar || curl -fsSLo /opt/spark/jars/hadoop-aws-3.3.4.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar
+        test -f /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar || curl -fsSLo /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar
+        exec /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://master:7077
     hostname: worker
     environment:
-      SPARK_CONF_DIR: /conf
-      SPARK_WORKER_CORES: 2
+      SPARK_CONF_DIR: /opt/spark/conf
+      GARAGE_KEY_ID: ${GARAGE_KEY_ID:-}
+      GARAGE_SECRET_KEY: ${GARAGE_SECRET_KEY:-}
+      AWS_ACCESS_KEY_ID: ${GARAGE_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${GARAGE_SECRET_KEY:-}
+      SPARK_WORKER_CORES: 1
       SPARK_WORKER_MEMORY: 4g
       SPARK_PUBLIC_DNS: ${EXTERNAL_IP}
+    volumes:
+      - /root/spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
     depends_on:
       - master
     networks:
@@ -59,7 +89,7 @@ services:
           - node.role == worker
 
   thrift:
-    image: apache/spark:4.0.0
+    image: apache/spark:3.5.1
     user: root
     networks:
       - traefik-public
@@ -73,11 +103,26 @@ services:
       - -lc
       - |
         set -euo pipefail
+        test -f /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.6.1.jar || curl -fsSLo /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.6.1.jar https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_2.12/1.6.1/iceberg-spark-runtime-3.5_2.12-1.6.1.jar
+        test -f /opt/spark/jars/nessie-spark-extensions-3.5_2.12-0.99.0.jar || curl -fsSLo /opt/spark/jars/nessie-spark-extensions-3.5_2.12-0.99.0.jar https://repo1.maven.org/maven2/org/projectnessie/nessie-integrations/nessie-spark-extensions-3.5_2.12/0.99.0/nessie-spark-extensions-3.5_2.12-0.99.0.jar
+        test -f /opt/spark/jars/hadoop-aws-3.3.4.jar || curl -fsSLo /opt/spark/jars/hadoop-aws-3.3.4.jar https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar
+        test -f /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar || curl -fsSLo /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar
         /opt/spark/sbin/start-thriftserver.sh \
           --master spark://spark-master:7077 \
           --hiveconf hive.server2.thrift.bind.host=0.0.0.0 \
           --hiveconf hive.server2.thrift.port=10000
         tail -F /opt/spark/logs/* 2>/dev/null || tail -f /dev/null
+    environment:
+      SPARK_CONF_DIR: /opt/spark/conf
+      SPARK_WORKER_CORES: 2
+      GARAGE_KEY_ID: ${GARAGE_KEY_ID:-}
+      GARAGE_SECRET_KEY: ${GARAGE_SECRET_KEY:-}
+      AWS_ACCESS_KEY_ID: ${GARAGE_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${GARAGE_SECRET_KEY:-}
+    depends_on:
+      - master
+    volumes:
+      - /root/spark/conf/spark-defaults.conf:/opt/spark/conf/spark-defaults.conf:ro
     deploy:
       replicas: 1
       restart_policy:

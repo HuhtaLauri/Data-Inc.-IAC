@@ -1,11 +1,12 @@
-- hosts: master
-
+- hosts: master:worker
   tasks:
     - name: Copy spark dir
       synchronize:
         src: "{{ playbook_dir }}/"
         dest: spark/
 
+- hosts: master
+  tasks:
     - name: Add spark label for main node
       shell: 'docker node update --label-add spark.spark-data=true {{ main_node }}'
 
@@ -14,5 +15,7 @@
       environment:
         - DOMAIN: '{{ spark_domain }}'
         - EXTERNAL_IP: '{{ spark_domain }}'
+        - GARAGE_KEY_ID: '{{ garage_key_id | default("") }}'
+        - GARAGE_SECRET_KEY: '{{ garage_secret_key | default("") }}'
       args:
         chdir: $HOME

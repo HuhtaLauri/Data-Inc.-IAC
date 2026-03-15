@@ -10,7 +10,9 @@ services:
       # This file is copied to the manager at $HOME/garage/garage.toml
       - /root/garage/garage.toml:/etc/garage.toml:ro
     networks:
-      - traefik-public
+      traefik-public:
+        aliases:
+          - garage
     deploy:
       replicas: 1
       placement:

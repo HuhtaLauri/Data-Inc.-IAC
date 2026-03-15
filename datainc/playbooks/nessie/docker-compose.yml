@@ -3,7 +3,9 @@ services:
     image: ghcr.io/projectnessie/nessie:latest
     user: root
     networks:
-      - traefik-public
+      traefik-public:
+        aliases:
+          - nessie
     volumes:
       - nessie-data:/var/lib/nessie
       # This file is copied to the node at $HOME/nessie/nessie.properties
