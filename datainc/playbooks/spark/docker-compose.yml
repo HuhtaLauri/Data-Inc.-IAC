@@ -70,7 +70,7 @@ services:
       GARAGE_SECRET_KEY: ${GARAGE_SECRET_KEY:-}
       AWS_ACCESS_KEY_ID: ${GARAGE_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${GARAGE_SECRET_KEY:-}
-      SPARK_WORKER_CORES: 1
+      SPARK_WORKER_CORES: 3
       SPARK_WORKER_MEMORY: 4g
       SPARK_PUBLIC_DNS: ${EXTERNAL_IP}
     volumes:
@@ -96,7 +96,7 @@ services:
     ports:
       # For dbt / JDBC clients (HiveServer2 / Spark Thrift Server)
       - 10000:10000
-      # Optional: UI for the thriftserver application
+      # Optional: UI for the thriftserver application (also routed via Traefik)
       - 4041:4040
     command:
       - /bin/bash
@@ -109,12 +109,15 @@ services:
         test -f /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar || curl -fsSLo /opt/spark/jars/aws-java-sdk-bundle-1.12.262.jar https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.262/aws-java-sdk-bundle-1.12.262.jar
         /opt/spark/sbin/start-thriftserver.sh \
           --master spark://spark-master:7077 \
+          --conf spark.ui.enabled=true \
+          --conf spark.sql.ui.enabled=true \
+          --executor-cores 1 \
           --hiveconf hive.server2.thrift.bind.host=0.0.0.0 \
           --hiveconf hive.server2.thrift.port=10000
         tail -F /opt/spark/logs/* 2>/dev/null || tail -f /dev/null
     environment:
       SPARK_CONF_DIR: /opt/spark/conf
-      SPARK_WORKER_CORES: 2
+      THRIFT_UI_DOMAIN: ${THRIFT_UI_DOMAIN:-}
       GARAGE_KEY_ID: ${GARAGE_KEY_ID:-}
       GARAGE_SECRET_KEY: ${GARAGE_SECRET_KEY:-}
       AWS_ACCESS_KEY_ID: ${GARAGE_KEY_ID:-}
@@ -131,6 +134,19 @@ services:
         constraints:
           - node.role == manager
           - node.labels.spark.spark-data == true
+      labels:
+        - traefik.enable=true
+        - traefik.docker.network=traefik-public
+        - traefik.constraint-label=traefik-public
+        - traefik.http.routers.thrift-http.rule=Host(`${THRIFT_UI_DOMAIN?Variable not set}`)
+        - traefik.http.routers.thrift-http.entrypoints=http
+        - traefik.http.routers.thrift-http.middlewares=https-redirect
+        - traefik.http.routers.thrift-https.rule=Host(`${THRIFT_UI_DOMAIN?Variable not set}`)
+        - traefik.http.routers.thrift-https.entrypoints=https
+        - traefik.http.routers.thrift-https.tls=true
+        - traefik.http.routers.thrift-https.tls.certresolver=le
+        - traefik.http.services.thrift.loadbalancer.server.port=4040
+        - traefik.http.routers.thrift-https.middlewares=admin-auth@docker
 
 networks:
   worker-network:

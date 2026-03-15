@@ -15,6 +15,7 @@
       environment:
         - DOMAIN: '{{ spark_domain }}'
         - EXTERNAL_IP: '{{ spark_domain }}'
+        - THRIFT_UI_DOMAIN: '{{ spark_thrift_ui_domain }}'
         - GARAGE_KEY_ID: '{{ garage_key_id | default("") }}'
         - GARAGE_SECRET_KEY: '{{ garage_secret_key | default("") }}'
       args:
