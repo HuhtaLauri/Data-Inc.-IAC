@@ -11,8 +11,8 @@
       shell: "docker node update --label-add nessie.nessie-data=true {{ nessie_node | default('datainc-2') }}"
 
     - name: Deploy nessie
-      shell: 'docker stack deploy -c nessie/docker-compose.yml nessie'
+      shell: 'docker stack deploy -c docker-compose.yml nessie'
       environment:
         - DOMAIN: '{{ nessie_domain }}'
       args:
-        chdir: $HOME
+        chdir: $HOME/nessie

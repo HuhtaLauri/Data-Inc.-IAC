@@ -7,8 +7,10 @@ services:
     volumes:
       - garage-data:/var/lib/garage/data
       - garage-meta:/var/lib/garage/meta
-      # This file is copied to the manager at $HOME/garage/garage.toml
-      - /root/garage/garage.toml:/etc/garage.toml:ro
+    configs:
+      - source: garage-toml
+        target: /etc/garage.toml
+        mode: 0444
     networks:
       traefik-public:
         aliases:
@@ -39,3 +41,7 @@ networks:
 volumes:
   garage-data:
   garage-meta:
+
+configs:
+  garage-toml:
+    file: ./garage.toml

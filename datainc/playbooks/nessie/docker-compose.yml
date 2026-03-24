@@ -8,8 +8,10 @@ services:
           - nessie
     volumes:
       - nessie-data:/var/lib/nessie
-      # This file is copied to the node at $HOME/nessie/nessie.properties
-      - /root/nessie/nessie.properties:/deployments/config/application.properties:ro
+    configs:
+      - source: nessie-properties
+        target: /deployments/config/application.properties
+        mode: 0444
     environment:
       - QUARKUS_HTTP_PORT=19120
     deploy:
@@ -40,3 +42,7 @@ networks:
 
 volumes:
   nessie-data:
+
+configs:
+  nessie-properties:
+    file: ./nessie.properties

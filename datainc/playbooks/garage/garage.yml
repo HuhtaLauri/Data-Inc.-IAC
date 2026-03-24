@@ -11,9 +11,9 @@
       shell: 'docker node update --label-add garage.garage-data=true {{ main_node }}'
 
     - name: Deploy garage
-      shell: 'docker stack deploy -c garage/docker-compose.yml garage'
+      shell: 'docker stack deploy -c docker-compose.yml garage'
       environment:
         - DOMAIN: '{{ garage_domain }}'
         - GARAGE_RPC_SECRET: '{{ garage_rpc_secret }}'
       args:
-        chdir: $HOME
+        chdir: $HOME/garage

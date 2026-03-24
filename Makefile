@@ -4,8 +4,5 @@ ping:
 up:
 	ansible-playbook -i datainc/inventory.yml datainc/main.yml -e @datainc/extra-vars.yml
 
-postgres-up:
-	ansible-playbook -i inventory.yml psql-playbook.yaml -e @extra-vars.yml
-
 seed-data:
 	aws s3 cp ../datainc/data/raw/dev/ s3://lakehouse/raw/dev/ --recursive --profile datanuggets-garage --no-verify-ssl
