@@ -5,7 +5,7 @@ services:
     environment:
       # Use a hostname that is valid per Spark URL parsing rules (no underscores)
       - SPARK_MASTER_URL=spark://spark-master:7077
-      - PYSPARK_SUBMIT_ARGS=--master spark://spark-master:7077 pyspark-shell
+      - PYSPARK_SUBMIT_ARGS=--master spark://spark-master:7077 --conf spark.cores.max=3 pyspark-shell
       - SPARK_CONF_DIR=/opt/spark/conf
       - GARAGE_KEY_ID=${GARAGE_KEY_ID:-}
       - GARAGE_SECRET_KEY=${GARAGE_SECRET_KEY:-}
@@ -24,7 +24,9 @@ services:
         python3 -m pip install --no-cache-dir \
           jupyterlab==4.3.3 \
           jupyterlab-lsp \
-          python-lsp-server
+          python-lsp-server \
+          pyspark \
+          ipython-sql
         mkdir -p /notebooks
         test -f /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.6.1.jar || curl -fsSLo /opt/spark/jars/iceberg-spark-runtime-3.5_2.12-1.6.1.jar https://repo1.maven.org/maven2/org/apache/iceberg/iceberg-spark-runtime-3.5_2.12/1.6.1/iceberg-spark-runtime-3.5_2.12-1.6.1.jar
         test -f /opt/spark/jars/nessie-spark-extensions-3.5_2.12-0.99.0.jar || curl -fsSLo /opt/spark/jars/nessie-spark-extensions-3.5_2.12-0.99.0.jar https://repo1.maven.org/maven2/org/projectnessie/nessie-integrations/nessie-spark-extensions-3.5_2.12/0.99.0/nessie-spark-extensions-3.5_2.12-0.99.0.jar

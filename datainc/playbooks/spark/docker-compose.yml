@@ -111,6 +111,7 @@ services:
           --master spark://spark-master:7077 \
           --conf spark.ui.enabled=true \
           --conf spark.sql.ui.enabled=true \
+          --conf spark.cores.max=3 \
           --executor-cores 1 \
           --hiveconf hive.server2.thrift.bind.host=0.0.0.0 \
           --hiveconf hive.server2.thrift.port=10000
